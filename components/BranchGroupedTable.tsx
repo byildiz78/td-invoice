@@ -167,7 +167,7 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
                           <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Toplam Tutar</span>
                         </div>
                         <p className="text-xl font-bold text-green-600">{formatCurrency(group.totalAmount)}</p>
-                        <p className="text-xs text-gray-500 mt-1">Şube Cirosu</p>
+                        <p className="text-xs text-gray-500 mt-1">Belge Toplamı</p>
                       </div>
                       
                       <div className="text-center bg-white rounded-xl px-6 py-4 shadow-md border border-gray-200 min-w-[140px]">

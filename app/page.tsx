@@ -1,34 +1,69 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, FileText, Download, RefreshCw, List, LayoutGrid, Building, CreditCard, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Search, Filter, FileText, Download, RefreshCw, List, LayoutGrid, Building, CreditCard, X, LogOut, User } from 'lucide-react';
 import DocumentCard from '@/components/DocumentCard';
 import DocumentTable from '@/components/DocumentTable';
 import BranchGroupedTable from '@/components/BranchGroupedTable';
 import DateRangeFilter from '@/components/DateRangeFilter';
 import DocumentModal from '@/components/DocumentModal';
+import { fetchInvoices } from '@/lib/api';
 
 export default function Home() {
-  const [documents, setDocuments] = useState([]);
-  const [filteredDocuments, setFilteredDocuments] = useState([]);
-  const [selectedDocument, setSelectedDocument] = useState(null);
+  const router = useRouter();
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<any[]>([]);
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'grid' | 'branch'>('branch');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isDateFilterLoading, setIsDateFilterLoading] = useState(false);
+  const [user, setUser] = useState<{ username: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // Load documents from JSON
+  // Check authentication
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/verify');
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+        } else {
+          router.push('/login');
+          return;
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        router.push('/login');
+        return;
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
+
+  // Load documents from API
+  useEffect(() => {
+    if (authLoading || !user) return;
+
     const loadDocuments = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/data.json');
-        if (!response.ok) {
-          throw new Error('Belgeler yüklenemedi');
-        }
-        const data = await response.json();
+        setError('');
+        
+        // Load documents with today's date as default
+        const today = new Date().toISOString().split('T')[0];
+        const data = await fetchInvoices({
+          startDate: today,
+          endDate: today
+        });
         setDocuments(data);
         setFilteredDocuments(data);
       } catch (err) {
@@ -40,9 +75,35 @@ export default function Home() {
     };
 
     loadDocuments();
-  }, []);
+  }, [authLoading, user]);
 
-  // Filter documents based on search term
+  // Reload documents when date range changes
+  useEffect(() => {
+    if (dateRange && dateRange.start && dateRange.end) {
+      const loadFilteredDocuments = async () => {
+        try {
+          setIsDateFilterLoading(true);
+          setError('');
+          
+          const data = await fetchInvoices({
+            startDate: dateRange.start,
+            endDate: dateRange.end
+          });
+          setDocuments(data);
+          setFilteredDocuments(data);
+        } catch (err) {
+          setError('Belgeler yüklenirken bir hata oluştu');
+          console.error('Error loading documents:', err);
+        } finally {
+          setIsDateFilterLoading(false);
+        }
+      };
+
+      loadFilteredDocuments();
+    }
+  }, [dateRange?.start, dateRange?.end]);
+
+  // Filter documents based on search term only (date filtering is done on server)
   useEffect(() => {
     let filtered = documents;
 
@@ -57,16 +118,8 @@ export default function Home() {
       );
     }
 
-    // Apply date range filter
-    if (dateRange) {
-      filtered = filtered.filter((doc: any) => {
-        const docDate = new Date(doc.InvoiceDate).toISOString().split('T')[0];
-        return docDate >= dateRange.start && docDate <= dateRange.end;
-      });
-    }
-
     setFilteredDocuments(filtered);
-  }, [searchTerm, documents, dateRange]);
+  }, [searchTerm, documents]);
 
   const handleDocumentClick = (document: any) => {
     setSelectedDocument(document);
@@ -82,8 +135,36 @@ export default function Home() {
     setDateRange({ start: startDate, end: endDate });
   };
 
-  const handleDateRangeClear = () => {
+  const handleDateRangeClear = async () => {
     setDateRange(null);
+    // Reload documents with today's date
+    try {
+      setIsDateFilterLoading(true);
+      setError('');
+      const today = new Date().toISOString().split('T')[0];
+      const data = await fetchInvoices({
+        startDate: today,
+        endDate: today
+      });
+      setDocuments(data);
+      setFilteredDocuments(data);
+    } catch (err) {
+      setError('Belgeler yüklenirken bir hata oluştu');
+      console.error('Error loading documents:', err);
+    } finally {
+      setIsDateFilterLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force redirect even if logout API fails
+      router.push('/login');
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -93,14 +174,18 @@ export default function Home() {
     }).format(amount);
   };
 
-  const totalAmount = filteredDocuments.reduce((sum: number, doc: any) => sum + (doc.InvoiceTotal || 0), 0);
+  const totalAmount = isDateFilterLoading ? 0 : filteredDocuments.reduce((sum: number, doc: any) => sum + (doc.InvoiceTotal || 0), 0);
+  const documentCount = isDateFilterLoading ? 0 : filteredDocuments.length;
+  const branchCount = isDateFilterLoading ? 0 : new Set(filteredDocuments.map((doc: any) => doc.BranchName)).size;
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">Belgeler yükleniyor...</p>
+          <p className="text-gray-600 text-lg">
+            {authLoading ? 'Kimlik doğrulanıyor...' : 'Belgeler yükleniyor...'}
+          </p>
         </div>
       </div>
     );
@@ -127,13 +212,33 @@ export default function Home() {
             <div className="flex items-center space-x-3 mb-4 lg:mb-0">
               <FileText className="h-8 w-8 text-blue-600" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">E-Arşiv Belge Yönetimi</h1>
+                <h1 className="text-2xl font-bold text-gray-900">robotPOS E-Arşiv Belge Yönetimi</h1>
                 <p className="text-gray-600">Belge ve fatura yönetim sistemi</p>
               </div>
+              <a
+                href="/api/docs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-4 inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-all duration-200"
+              >
+                API Docs
+              </a>
             </div>
             
-            {/* Search */}
+            {/* User Info & Search */}
             <div className="flex items-center space-x-4">
+              {/* User Info */}
+              <div className="flex items-center space-x-2 bg-gray-50 px-3 py-2 rounded-lg border">
+                <User className="h-4 w-4 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">{user?.username}</span>
+                <button
+                  onClick={handleLogout}
+                  className="ml-2 p-1 text-gray-500 hover:text-red-600 transition-colors"
+                  title="Çıkış Yap"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
               <div className="flex items-center bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-2 space-x-2 shadow-lg border border-gray-300">
                 <button
                   onClick={() => setViewMode('table')}
@@ -203,52 +308,56 @@ export default function Home() {
 
       {/* Stats */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
-            <div className="flex items-center">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-200">
+            <div className="text-center">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-200 w-fit mx-auto mb-4">
                 <FileText className="h-8 w-8 text-blue-600" />
               </div>
-              <div className="ml-6">
-                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Toplam Belge</p>
-                <p className="text-3xl font-bold text-gray-900">{filteredDocuments.length}</p>
-              </div>
+              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Toplam Belge</p>
+              <p className="text-3xl font-bold text-gray-900">{documentCount}</p>
             </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
-            <div className="flex items-center">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-green-100 to-green-200">
+            <div className="text-center">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-green-100 to-green-200 w-fit mx-auto mb-4">
                 <CreditCard className="h-8 w-8 text-green-600" />
               </div>
-              <div className="ml-6">
-                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Toplam Tutar</p>
-                <p className="text-3xl font-bold text-green-600">{formatCurrency(totalAmount)}</p>
-              </div>
+              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Toplam Tutar</p>
+              <p className="text-2xl font-bold text-green-600">{formatCurrency(totalAmount)}</p>
             </div>
           </div>
 
           <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
-            <div className="flex items-center">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200">
+            <div className="text-center">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 w-fit mx-auto mb-4">
+                <Building className="h-8 w-8 text-orange-600" />
+              </div>
+              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Toplam Şube</p>
+              <p className="text-3xl font-bold text-orange-600">{branchCount}</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-all duration-300">
+            <div className="text-center">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-100 to-purple-200 w-fit mx-auto mb-4">
                 <Filter className="h-8 w-8 text-purple-600" />
               </div>
-              <div className="ml-6">
-                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Belge Türleri</p>
-                <div className="flex items-center space-x-4">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-purple-600">
-                      {filteredDocuments.filter((doc: any) => doc.Type?.includes('FATURA')).length}
-                    </p>
-                    <p className="text-xs text-gray-500">E-Fatura</p>
-                  </div>
-                  <div className="w-px h-8 bg-gray-300"></div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-indigo-600">
-                      {filteredDocuments.filter((doc: any) => doc.Type?.includes('ARSIV') || doc.Type?.includes('ARŞİV')).length}
-                    </p>
-                    <p className="text-xs text-gray-500">E-Arşiv</p>
-                  </div>
+              <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Belge Türleri</p>
+              <div className="flex items-center justify-center space-x-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">
+                    {isDateFilterLoading ? 0 : filteredDocuments.filter((doc: any) => doc.Type?.includes('FATURA')).length}
+                  </p>
+                  <p className="text-xs text-gray-500">E-Fatura</p>
+                </div>
+                <div className="w-px h-8 bg-gray-300"></div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {isDateFilterLoading ? 0 : filteredDocuments.filter((doc: any) => doc.Type?.includes('ARSIV') || doc.Type?.includes('ARŞİV')).length}
+                  </p>
+                  <p className="text-xs text-gray-500">E-Arşiv</p>
                 </div>
               </div>
             </div>
@@ -256,7 +365,12 @@ export default function Home() {
         </div>
 
         {/* Documents */}
-        {filteredDocuments.length === 0 ? (
+        {isDateFilterLoading ? (
+          <div className="text-center py-20 bg-white rounded-2xl shadow-lg">
+            <RefreshCw className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600 text-lg">Belgeler yükleniyor...</p>
+          </div>
+        ) : filteredDocuments.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-lg">
             <div className="p-6 bg-gray-100 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
               <FileText className="h-12 w-12 text-gray-400" />

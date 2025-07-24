@@ -16,10 +16,8 @@ export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRang
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState('Bugün');
 
-  // Component mount olduğunda varsayılan tarihleri uygula
-  useEffect(() => {
-    onDateRangeChange(today, today);
-  }, []);
+  // Component mount olduğunda varsayılan tarihleri uygula - kaldırıldı
+  // İlk yüklemede otomatik tarih uygulaması yapılmayacak
 
   const getDateRange = (preset: string) => {
     const now = new Date();
@@ -90,16 +88,16 @@ export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRang
   const handleStartDateChange = (value: string) => {
     setStartDate(value);
     setSelectedPreset('Özel');
-    if (value && endDate) {
-      onDateRangeChange(value, endDate);
-    }
   };
 
   const handleEndDateChange = (value: string) => {
     setEndDate(value);
     setSelectedPreset('Özel');
-    if (startDate && value) {
-      onDateRangeChange(startDate, value);
+  };
+
+  const handleApply = () => {
+    if (startDate && endDate) {
+      onDateRangeChange(startDate, endDate);
     }
   };
 
@@ -192,7 +190,7 @@ export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRang
             </span>
           )}
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-end space-x-2">
           <button
             onClick={handleClear}
             className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md"
@@ -200,6 +198,14 @@ export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRang
             <X className="w-4 h-4 mr-2" />
             Bugüne Sıfırla
           </button>
+          {selectedPreset === 'Özel' && (
+            <button
+              onClick={handleApply}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              Uygula
+            </button>
+          )}
         </div>
       </div>
     </div>
