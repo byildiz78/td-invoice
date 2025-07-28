@@ -216,9 +216,16 @@ export default function DocumentTable({ documents, onDocumentClick }: DocumentTa
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center justify-center">
                     {document.IsTransferred === 1 ? (
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                        <span className="text-sm font-medium text-green-700">Evet</span>
+                      <div className="flex flex-col items-center space-y-1">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                          <span className="text-sm font-medium text-green-700">Evet</span>
+                        </div>
+                        {document.REF_NO && (
+                          <span className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                            {document.REF_NO}
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <div className="flex items-center space-x-2">

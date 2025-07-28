@@ -1,6 +1,6 @@
 'use client';
 
-import { X, FileText, RefreshCw } from 'lucide-react';
+import { X, FileText, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface DocumentModalProps {
@@ -121,13 +121,32 @@ export default function DocumentModal({ documentData, isOpen, onClose, loading =
                   <p className="text-sm text-gray-600">
                     {documentData.Type?.includes('FATURA') ? 'Taslak Elektronik Fatura' : 'Taslak Elektronik Arşiv Belgesi'}
                   </p>
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-center justify-center space-x-3">
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                       documentData.Type?.includes('FATURA') 
                         ? 'bg-purple-100 text-purple-800' 
                         : 'bg-indigo-100 text-indigo-800'
                     }`}>
                       {documentData.Type}
+                    </span>
+                    
+                    {/* Transfer Status Badge */}
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                      documentData.IsTransferred === 1
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {documentData.IsTransferred === 1 ? (
+                        <>
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          ERP'ye Aktarıldı
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-3 w-3 mr-1" />
+                          ERP'ye Aktarılmadı
+                        </>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -339,6 +358,43 @@ export default function DocumentModal({ documentData, isOpen, onClose, loading =
                 </div>
               </div>
             )}
+
+            {/* Transfer Status Section */}
+            <div className="mb-8">
+              <h3 className="font-bold text-gray-900 mb-4 bg-gray-100 p-3 rounded-lg">AKTARIM DURUMU</h3>
+              <div className="border border-gray-300 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    {documentData.IsTransferred === 1 ? (
+                      <>
+                        <CheckCircle2 className="h-6 w-6 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium text-green-700">Aktarıldı</p>
+                          <p className="text-xs text-gray-500">Bu belge ERP sistemine aktarılmıştır</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-6 w-6 text-red-500" />
+                        <div>
+                          <p className="text-sm font-medium text-red-600">Aktarılmadı</p>
+                          <p className="text-xs text-gray-500">Bu belge henüz ERP sistemine aktarılmamıştır</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  
+                  {documentData.IsTransferred === 1 && documentData.REF_NO && (
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 mb-1">Referans No:</p>
+                      <span className="text-sm font-mono text-gray-700 bg-gray-100 px-3 py-1 rounded border">
+                        {documentData.REF_NO}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* Footer */}
             <div className="border-t-2 border-gray-300 pt-6 mt-8">

@@ -11,6 +11,7 @@ SELECT
 		h.InvoiceDate,
 		h.CustomerName,
 		h.CustomerTaxNo,
+		s.REF_NO,
 		h.CustomerTaxOffice,
 		ISNULL(h.UrnMail,'') AS [CustomerEMail],
 		h.CustomerStreetName AS [CustomerAddress],
@@ -44,7 +45,8 @@ SELECT
 				EInvoicePayment p WITH(NOLOCK)
 			WHERE
 				p.OrderKey = h.OrderKey FOR JSON PATH
-		) AS Payments
+		) AS Payments,
+		CASE WHEN s.ORDERKEY IS NOT NULL THEN 1 ELSE 0 END AS IsTransferred
 	FROM
 		EInvoiceHeader h WITH(NOLOCK)
 		INNER JOIN efr_Branchs br ON br.BranchID= h.Branch AND br.CustomField7 = 'TDUN'

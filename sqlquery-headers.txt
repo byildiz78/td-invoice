@@ -11,6 +11,7 @@ SELECT
 		h.InvoiceDate,
 		h.CustomerName,
 		h.CustomerTaxNo,
+		s.REF_NO,
 		h.CustomerTaxOffice,
 		ISNULL(h.UrnMail,'') AS [CustomerEMail],
 		h.CustomerStreetName AS [CustomerAddress],

@@ -9,6 +9,7 @@ export interface InvoiceHeader {
   InvoiceDate: string;
   CustomerName: string;
   CustomerTaxNo: string;
+  REF_NO?: string; // Logo aktarım referans numarası
   CustomerTaxOffice: string;
   CustomerEMail: string;
   CustomerAddress: string;
