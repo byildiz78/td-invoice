@@ -22,7 +22,7 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'grid' | 'branch'>('branch');
   const [dateRange, setDateRange] = useState<{ start: string; end: string } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isDateFilterLoading, setIsDateFilterLoading] = useState(false);
   const [user, setUser] = useState<{ username: string } | null>(null);
@@ -52,34 +52,8 @@ export default function Home() {
     checkAuth();
   }, [router]);
 
-  // Load documents from API
-  useEffect(() => {
-    if (authLoading || !user) return;
-
-    const loadDocuments = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        
-        // Load documents with today's date as default
-        const today = new Date().toISOString().split('T')[0];
-        // YENİ: fetchInvoiceHeaders kullan
-        const data = await fetchInvoiceHeaders({
-          startDate: today,
-          endDate: today
-        });
-        setDocuments(data);
-        setFilteredDocuments(data);
-      } catch (err) {
-        setError('Belgeler yüklenirken bir hata oluştu');
-        console.error('Error loading documents:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadDocuments();
-  }, [authLoading, user]);
+  // İlk yükleme artık DateRangeFilter tarafından tetikleniyor
+  // Bu useEffect kaldırıldı
 
   // Reload documents when date range changes
   useEffect(() => {
@@ -388,7 +362,9 @@ export default function Home() {
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-3">Belge bulunamadı</h3>
             <p className="text-gray-600 text-lg">
-              {searchTerm ? 'Arama kriterlerinize uygun belge bulunamadı.' : 'Henüz belge eklenmemiş.'}
+              {searchTerm ? 'Arama kriterlerinize uygun belge bulunamadı.' : 
+               !dateRange ? 'Belgeleri görüntülemek için tarih aralığı seçip "Uygula" butonuna basın.' : 
+               'Seçilen tarih aralığında belge bulunamadı.'}
             </p>
           </div>
         ) : (

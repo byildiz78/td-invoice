@@ -18,34 +18,35 @@ export default function DateRangeFilter({ onDateRangeChange, onTransferStatusCha
   const [selectedPreset, setSelectedPreset] = useState('Bugün');
   const [transferStatus, setTransferStatus] = useState<'all' | 'transferred' | 'not-transferred'>('all');
 
-  // Component mount olduğunda varsayılan tarihleri uygula - kaldırıldı
-  // İlk yüklemede otomatik tarih uygulaması yapılmayacak
+  // Otomatik yükleme devre dışı - kullanıcı manuel olarak tetikleyecek
 
   const getDateRange = (preset: string) => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today = new Date().toISOString().split('T')[0]; // Bugün string olarak
     
     switch (preset) {
       case 'Dün': {
-        const yesterday = new Date(today);
+        const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
         return {
-          start: yesterday.toISOString().split('T')[0],
-          end: yesterday.toISOString().split('T')[0]
+          start: yesterdayStr,
+          end: yesterdayStr
         };
       }
       case 'Bu Hafta': {
-        const startOfWeek = new Date(today);
+        const now = new Date();
+        const startOfWeek = new Date(now);
         const day = startOfWeek.getDay();
         const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Pazartesi başlangıç
         startOfWeek.setDate(diff);
         return {
           start: startOfWeek.toISOString().split('T')[0],
-          end: today.toISOString().split('T')[0]
+          end: today
         };
       }
       case 'Geçen Hafta': {
-        const startOfLastWeek = new Date(today);
+        const now = new Date();
+        const startOfLastWeek = new Date(now);
         const day = startOfLastWeek.getDay();
         const diff = startOfLastWeek.getDate() - day + (day === 0 ? -6 : 1) - 7;
         startOfLastWeek.setDate(diff);
@@ -57,15 +58,17 @@ export default function DateRangeFilter({ onDateRangeChange, onTransferStatusCha
         };
       }
       case 'Bu Ay': {
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         return {
           start: startOfMonth.toISOString().split('T')[0],
-          end: today.toISOString().split('T')[0]
+          end: today
         };
       }
       case 'Geçen Ay': {
-        const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+        const now = new Date();
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
         return {
           start: startOfLastMonth.toISOString().split('T')[0],
           end: endOfLastMonth.toISOString().split('T')[0]
@@ -73,8 +76,8 @@ export default function DateRangeFilter({ onDateRangeChange, onTransferStatusCha
       }
       default: // Bugün
         return {
-          start: today.toISOString().split('T')[0],
-          end: today.toISOString().split('T')[0]
+          start: today,
+          end: today
         };
     }
   };
@@ -85,7 +88,7 @@ export default function DateRangeFilter({ onDateRangeChange, onTransferStatusCha
     setEndDate(end);
     setSelectedPreset(preset);
     setIsDropdownOpen(false);
-    onDateRangeChange(start, end);
+    // Preset seçimi sadece tarihleri set eder, veri yükleme yapmaz
   };
   const handleStartDateChange = (value: string) => {
     setStartDate(value);
@@ -264,14 +267,12 @@ export default function DateRangeFilter({ onDateRangeChange, onTransferStatusCha
           )}
         </div>
         <div className="flex justify-end space-x-2">
-          {selectedPreset === 'Özel' && (
-            <button
-              onClick={handleApply}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
-            >
-              Uygula
-            </button>
-          )}
+          <button
+            onClick={handleApply}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
+          >
+            Uygula
+          </button>
         </div>
       </div>
     </div>
