@@ -280,7 +280,9 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
                             <td className="px-6 py-4">
                               <div className="max-w-xs">
                                 <div className="text-sm font-medium text-gray-900 truncate" title={document.CustomerName}>
-                                  {document.CustomerName}
+                                  {document.CustomerName && document.CustomerName.length > 20 
+                                    ? document.CustomerName.substring(0, 20) + '...' 
+                                    : document.CustomerName}
                                 </div>
                                 <div className="text-xs text-gray-500 truncate">
                                   {document.CustomerEMail}
