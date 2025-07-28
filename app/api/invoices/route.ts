@@ -69,22 +69,35 @@ export async function POST(request: NextRequest) {
   try {
     console.log('API Route called');
     
-    // Check authorization
-    const authHeader = request.headers.get('authorization');
-    const expectedToken = process.env.ROBOTPOS_API_TOKEN;
+    // Check session authentication
+    const cookieHeader = request.headers.get('cookie');
+    const sessionCookie = cookieHeader?.split(';')
+      .find(c => c.trim().startsWith('session='))
+      ?.split('=')[1];
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!sessionCookie) {
       return NextResponse.json(
-        { error: 'Authorization header missing or invalid format', details: 'Please provide Bearer token' },
+        { error: 'Unauthorized', details: 'Please login first' },
         { status: 401 }
       );
     }
     
-    const providedToken = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
-    if (!expectedToken || providedToken !== expectedToken) {
+    // Decode and verify session
+    try {
+      const decoded = decodeURIComponent(sessionCookie);
+      const sessionData = Buffer.from(decoded, 'base64').toString();
+      const [username, timestamp] = sessionData.split(':');
+      
+      // Check if session is valid (less than 24 hours old)
+      if (Date.now() - parseInt(timestamp) > 24 * 60 * 60 * 1000) {
+        return NextResponse.json(
+          { error: 'Session expired', details: 'Please login again' },
+          { status: 401 }
+        );
+      }
+    } catch (error) {
       return NextResponse.json(
-        { error: 'Invalid API token', details: 'Please provide a valid RobotPos API token' },
+        { error: 'Invalid session', details: 'Please login again' },
         { status: 401 }
       );
     }
