@@ -11,7 +11,7 @@ import path from 'path';
  *     tags:
  *       - Invoices
  *     security:
- *       - bearerAuth: []
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:

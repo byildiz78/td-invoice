@@ -11,17 +11,17 @@ const options = {
     },
     servers: [
       {
-        url: process.env.NODE_ENV === 'production' ? 'https://your-domain.com' : 'http://localhost:3000',
+        url: process.env.NODE_ENV === 'production' ? 'http://138.199.208.103:3078' : 'http://localhost:3000',
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
     ],
     components: {
       securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'Enter your RobotPos API token',
+        cookieAuth: {
+          type: 'apiKey',
+          in: 'cookie',
+          name: 'session',
+          description: 'Session cookie obtained after login',
         },
       },
       schemas: {
@@ -194,7 +194,7 @@ const options = {
     },
     security: [
       {
-        bearerAuth: [],
+        cookieAuth: [],
       },
     ],
   },
