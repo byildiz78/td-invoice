@@ -101,10 +101,10 @@ export default function DocumentModal({ documentData, isOpen, onClose }: Documen
                 <FileText className="h-12 w-12 text-blue-600 mr-3" />
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">
-                    {documentData.Type?.includes('FATURA') ? 'E-FATURA' : 'E-ARŞİV FATURA'}
+                    {documentData.Type?.includes('FATURA') ? 'Taslak E-FATURA' : 'Taslak E-Belge'}
                   </h1>
                   <p className="text-sm text-gray-600">
-                    {documentData.Type?.includes('FATURA') ? 'Elektronik Fatura' : 'Elektronik Arşiv Faturası'}
+                    {documentData.Type?.includes('FATURA') ? 'Taslak Elektronik Fatura' : 'Taslak Elektronik Arşiv Belgesi'}
                   </p>
                   <div className="mt-2">
                     <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
@@ -118,7 +118,6 @@ export default function DocumentModal({ documentData, isOpen, onClose }: Documen
                 </div>
               </div>
               <div className="bg-gray-100 p-3 rounded-lg inline-block">
-                <p className="text-sm font-semibold">Fatura No: <span className="font-mono">{documentData.OrderID}</span></p>
                 <p className="text-sm">Belge Tarihi: <span className="font-semibold">{formatDateTime(documentData.InvoiceDate)}</span></p>
               </div>
             </div>
@@ -331,11 +330,11 @@ export default function DocumentModal({ documentData, isOpen, onClose }: Documen
               <div className="grid grid-cols-2 gap-8 text-xs text-gray-600">
                 <div>
                   <p><strong>Düzenleme Tarihi:</strong> {formatDateTime(documentData.InvoiceDate)}</p>
-                  <p><strong>Belge Türü:</strong> {documentData.Type}</p>
-                  <p><strong>Düzenleyen:</strong> {documentData.UserCode}</p>
+                  <p><strong>Taslak Belge Türü:</strong> {documentData.Type}</p>
+                  <p><strong></strong> {documentData.UserCode}</p>
                 </div>
                 <div className="text-right">
-                  <p><strong>ETTN:</strong> {documentData.OrderKey?.substring(0, 36) || 'N/A'}</p>
+                  <p><strong>robotPOS OrderKey:</strong> {documentData.OrderKey?.substring(0, 36) || 'N/A'}</p>
                 </div>
               </div>
             </div>
