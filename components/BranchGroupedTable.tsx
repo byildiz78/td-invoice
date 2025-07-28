@@ -147,7 +147,7 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
       </div>
 
       {/* Branch Groups */}
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y-4 divide-gray-300">
         {groupedData.map((group, groupIndex) => {
           const isExpanded = expandedBranches.has(group.branchName);
           
