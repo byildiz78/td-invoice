@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Building2, FileText, CreditCard, Calendar, Eye, TrendingUp } from 'lucide-react';
+import { ChevronDown, ChevronRight, Building2, FileText, CreditCard, Calendar, Eye, CheckCircle2, XCircle } from 'lucide-react';
 
 interface BranchGroupedTableProps {
   documents: any[];
@@ -15,6 +15,8 @@ interface BranchGroup {
   documentCount: number;
   eFaturaCount: number;
   eArsivCount: number;
+  lastDocumentDate: string;
+  transferredCount: number;
 }
 
 export default function BranchGroupedTable({ documents, onDocumentClick }: BranchGroupedTableProps) {
@@ -25,6 +27,21 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatDateOnly = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  };
+
+  const formatTimeOnly = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('tr-TR', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -49,7 +66,9 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
         totalAmount: 0,
         documentCount: 0,
         eFaturaCount: 0,
-        eArsivCount: 0
+        eArsivCount: 0,
+        lastDocumentDate: doc.InvoiceDate,
+        transferredCount: 0
       };
       acc.push(existingGroup);
     }
@@ -58,10 +77,20 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
     existingGroup.totalAmount += doc.InvoiceTotal || 0;
     existingGroup.documentCount += 1;
     
+    // En yeni belge tarihini güncelle
+    if (new Date(doc.InvoiceDate) > new Date(existingGroup.lastDocumentDate)) {
+      existingGroup.lastDocumentDate = doc.InvoiceDate;
+    }
+    
     if (doc.Type?.includes('FATURA')) {
       existingGroup.eFaturaCount += 1;
     } else if (doc.Type?.includes('ARSIV') || doc.Type?.includes('ARŞİV')) {
       existingGroup.eArsivCount += 1;
+    }
+    
+    // Aktarılan belge sayısını güncelle
+    if (doc.IsTransferred === 1) {
+      existingGroup.transferredCount += 1;
     }
     
     return acc;
@@ -146,6 +175,18 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
                       <p className="text-sm text-gray-600">
                         {group.documentCount} belge • {group.eFaturaCount} E-Fatura • {group.eArsivCount} E-Arşiv
                       </p>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <span className="text-xs font-medium text-gray-500">Son belge:</span>
+                        <div className="flex items-center space-x-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+                            <Calendar className="h-3 w-3 mr-1 text-gray-500" />
+                            {formatDateOnly(group.lastDocumentDate)}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                            {formatTimeOnly(group.lastDocumentDate)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   
@@ -172,13 +213,16 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
                       
                       <div className="text-center bg-white rounded-xl px-6 py-4 shadow-md border border-gray-200 min-w-[140px]">
                         <div className="flex items-center justify-center space-x-2 mb-2">
-                          <TrendingUp className="h-4 w-4 text-purple-600" />
-                          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Ortalama Tutar</span>
+                          <CheckCircle2 className="h-4 w-4 text-purple-600" />
+                          <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Aktarılan</span>
                         </div>
-                        <p className="text-xl font-bold text-purple-600">
-                          {formatCurrency(group.totalAmount / group.documentCount)}
+                        <div className="flex items-center justify-center space-x-1">
+                          <p className="text-xl font-bold text-purple-600">{group.transferredCount}</p>
+                          <p className="text-sm text-gray-500">/ {group.documentCount}</p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          %{Math.round((group.transferredCount / group.documentCount) * 100)} Tamamlandı
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">Belge Başına</p>
                       </div>
                     </div>
                   </div>
@@ -206,6 +250,9 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                             Tutar
+                          </th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                            Aktarıldı
                           </th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                             İşlemler
@@ -257,6 +304,21 @@ export default function BranchGroupedTable({ documents, onDocumentClick }: Branc
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="text-sm font-bold text-green-600 bg-green-50 px-3 py-1 rounded-full">
                                 {formatCurrency(document.InvoiceTotal)}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center justify-center">
+                                {document.IsTransferred === 1 ? (
+                                  <div className="flex items-center space-x-2">
+                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                    <span className="text-xs font-medium text-green-700">Evet</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center space-x-2">
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                    <span className="text-xs font-medium text-red-600">Hayır</span>
+                                  </div>
+                                )}
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">

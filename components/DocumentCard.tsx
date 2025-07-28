@@ -44,6 +44,16 @@ export default function DocumentCard({ document, onClick }: DocumentCardProps) {
             <div className="font-bold text-gray-900">{document.OrderID}</div>
           </div>
         </div>
+        
+        {/* Item and Payment Counts */}
+        <div className="flex items-center justify-center space-x-2 mb-3">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            {document.ItemCount || 0} kalem
+          </span>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            {document.PaymentCount || 0} ödeme
+          </span>
+        </div>
 
         {/* Customer Info */}
         <div className="mb-4">

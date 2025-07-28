@@ -1,20 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, X, ChevronDown } from 'lucide-react';
+import { Calendar, X, ChevronDown, CheckCircle2, XCircle, Filter } from 'lucide-react';
 
 interface DateRangeFilterProps {
   onDateRangeChange: (startDate: string, endDate: string) => void;
-  onClear: () => void;
+  onTransferStatusChange?: (status: 'all' | 'transferred' | 'not-transferred') => void;
 }
 
-export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRangeFilterProps) {
+export default function DateRangeFilter({ onDateRangeChange, onTransferStatusChange }: DateRangeFilterProps) {
   // Bugünün tarihini al
   const today = new Date().toISOString().split('T')[0];
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isTransferDropdownOpen, setIsTransferDropdownOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState('Bugün');
+  const [transferStatus, setTransferStatus] = useState<'all' | 'transferred' | 'not-transferred'>('all');
 
   // Component mount olduğunda varsayılan tarihleri uygula - kaldırıldı
   // İlk yüklemede otomatik tarih uygulaması yapılmayacak
@@ -101,11 +103,27 @@ export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRang
     }
   };
 
-  const handleClear = () => {
-    setStartDate(today);
-    setEndDate(today);
-    setSelectedPreset('Bugün');
-    onDateRangeChange(today, today);
+
+  const handleTransferStatusChange = (status: 'all' | 'transferred' | 'not-transferred') => {
+    setTransferStatus(status);
+    setIsTransferDropdownOpen(false);
+    onTransferStatusChange?.(status);
+  };
+
+  const getTransferStatusLabel = (status: 'all' | 'transferred' | 'not-transferred') => {
+    switch (status) {
+      case 'all': return 'Tümü';
+      case 'transferred': return 'Aktarılan';
+      case 'not-transferred': return 'Aktarılmayan';
+    }
+  };
+
+  const getTransferStatusIcon = (status: 'all' | 'transferred' | 'not-transferred') => {
+    switch (status) {
+      case 'all': return Filter;
+      case 'transferred': return CheckCircle2;
+      case 'not-transferred': return XCircle;
+    }
   };
 
   const presets = ['Bugün', 'Dün', 'Bu Hafta', 'Geçen Hafta', 'Bu Ay', 'Geçen Ay'];
@@ -118,7 +136,7 @@ export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRang
         <h3 className="text-lg font-semibold text-gray-900">Tarih Aralığı</h3>
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-4">
         {/* Hızlı Seçim Dropdown */}
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -176,6 +194,61 @@ export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRang
             className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 hover:border-blue-300"
           />
         </div>
+        
+        {/* Aktarım Durumu Filtresi */}
+        <div className="relative">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Aktarım Durumu
+          </label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsTransferDropdownOpen(!isTransferDropdownOpen)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 hover:border-blue-300 flex items-center justify-between"
+            >
+              <div className="flex items-center space-x-2">
+                {(() => {
+                  const IconComponent = getTransferStatusIcon(transferStatus);
+                  return <IconComponent className="h-4 w-4 text-gray-500" />;
+                })()}
+                <span className="text-gray-900">{getTransferStatusLabel(transferStatus)}</span>
+              </div>
+              <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${isTransferDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {isTransferDropdownOpen && (
+              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg">
+                <button
+                  onClick={() => handleTransferStatusChange('all')}
+                  className={`w-full px-4 py-3 text-left text-sm hover:bg-blue-50 transition-colors duration-200 first:rounded-t-lg flex items-center space-x-2 ${
+                    transferStatus === 'all' ? 'bg-blue-100 text-blue-800 font-medium' : 'text-gray-900'
+                  }`}
+                >
+                  <Filter className="h-4 w-4" />
+                  <span>Tümü</span>
+                </button>
+                <button
+                  onClick={() => handleTransferStatusChange('transferred')}
+                  className={`w-full px-4 py-3 text-left text-sm hover:bg-green-50 transition-colors duration-200 flex items-center space-x-2 ${
+                    transferStatus === 'transferred' ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-900'
+                  }`}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Aktarılan</span>
+                </button>
+                <button
+                  onClick={() => handleTransferStatusChange('not-transferred')}
+                  className={`w-full px-4 py-3 text-left text-sm hover:bg-red-50 transition-colors duration-200 last:rounded-b-lg flex items-center space-x-2 ${
+                    transferStatus === 'not-transferred' ? 'bg-red-100 text-red-800 font-medium' : 'text-gray-900'
+                  }`}
+                >
+                  <XCircle className="h-4 w-4" />
+                  <span>Aktarılmayan</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
       
       <div className="mt-4 flex justify-between items-center">
@@ -191,13 +264,6 @@ export default function DateRangeFilter({ onDateRangeChange, onClear }: DateRang
           )}
         </div>
         <div className="flex justify-end space-x-2">
-          <button
-            onClick={handleClear}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md"
-          >
-            <X className="w-4 h-4 mr-2" />
-            Bugüne Sıfırla
-          </button>
           {selectedPreset === 'Özel' && (
             <button
               onClick={handleApply}

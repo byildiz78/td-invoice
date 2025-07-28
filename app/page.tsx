@@ -8,13 +8,16 @@ import DocumentTable from '@/components/DocumentTable';
 import BranchGroupedTable from '@/components/BranchGroupedTable';
 import DateRangeFilter from '@/components/DateRangeFilter';
 import DocumentModal from '@/components/DocumentModal';
-import { fetchInvoices } from '@/lib/api';
+import { fetchInvoices, fetchInvoiceHeaders, fetchInvoiceDetail } from '@/lib/api';
+import { InvoiceHeader, InvoiceDetail } from '@/types/invoice';
 
 export default function Home() {
   const router = useRouter();
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<any[]>([]);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [documents, setDocuments] = useState<InvoiceHeader[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<InvoiceHeader[]>([]);
+  const [selectedDocument, setSelectedDocument] = useState<InvoiceDetail | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [transferStatusFilter, setTransferStatusFilter] = useState<'all' | 'transferred' | 'not-transferred'>('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'grid' | 'branch'>('branch');
@@ -60,7 +63,8 @@ export default function Home() {
         
         // Load documents with today's date as default
         const today = new Date().toISOString().split('T')[0];
-        const data = await fetchInvoices({
+        // YENİ: fetchInvoiceHeaders kullan
+        const data = await fetchInvoiceHeaders({
           startDate: today,
           endDate: today
         });
@@ -85,7 +89,8 @@ export default function Home() {
           setIsDateFilterLoading(true);
           setError('');
           
-          const data = await fetchInvoices({
+          // YENİ: fetchInvoiceHeaders kullan
+          const data = await fetchInvoiceHeaders({
             startDate: dateRange.start,
             endDate: dateRange.end
           });
@@ -103,13 +108,13 @@ export default function Home() {
     }
   }, [dateRange?.start, dateRange?.end]);
 
-  // Filter documents based on search term only (date filtering is done on server)
+  // Filter documents based on search term and transfer status (date filtering is done on server)
   useEffect(() => {
     let filtered = documents;
 
     // Apply search filter
     if (searchTerm.trim()) {
-      filtered = filtered.filter((doc: any) =>
+      filtered = filtered.filter((doc: InvoiceHeader) =>
         doc.CustomerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         doc.OrderID?.toString().includes(searchTerm) ||
         doc.BranchName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -118,12 +123,34 @@ export default function Home() {
       );
     }
 
-    setFilteredDocuments(filtered);
-  }, [searchTerm, documents]);
+    // Apply transfer status filter
+    if (transferStatusFilter !== 'all') {
+      filtered = filtered.filter((doc: InvoiceHeader) => {
+        if (transferStatusFilter === 'transferred') {
+          return doc.IsTransferred === 1;
+        } else if (transferStatusFilter === 'not-transferred') {
+          return doc.IsTransferred === 0;
+        }
+        return true;
+      });
+    }
 
-  const handleDocumentClick = (document: any) => {
-    setSelectedDocument(document);
-    setIsModalOpen(true);
+    setFilteredDocuments(filtered);
+  }, [searchTerm, documents, transferStatusFilter]);
+
+  const handleDocumentClick = async (document: InvoiceHeader) => {
+    setLoadingDetail(true);
+    try {
+      // YENİ: Detayı ayrı fetch et
+      const detail = await fetchInvoiceDetail(document.OrderKey);
+      setSelectedDocument(detail);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Error loading invoice detail:', error);
+      setError('Fatura detayı yüklenirken hata oluştu');
+    } finally {
+      setLoadingDetail(false);
+    }
   };
 
   const handleCloseModal = () => {
@@ -135,25 +162,9 @@ export default function Home() {
     setDateRange({ start: startDate, end: endDate });
   };
 
-  const handleDateRangeClear = async () => {
-    setDateRange(null);
-    // Reload documents with today's date
-    try {
-      setIsDateFilterLoading(true);
-      setError('');
-      const today = new Date().toISOString().split('T')[0];
-      const data = await fetchInvoices({
-        startDate: today,
-        endDate: today
-      });
-      setDocuments(data);
-      setFilteredDocuments(data);
-    } catch (err) {
-      setError('Belgeler yüklenirken bir hata oluştu');
-      console.error('Error loading documents:', err);
-    } finally {
-      setIsDateFilterLoading(false);
-    }
+
+  const handleTransferStatusChange = (status: 'all' | 'transferred' | 'not-transferred') => {
+    setTransferStatusFilter(status);
   };
 
   const handleLogout = async () => {
@@ -302,7 +313,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <DateRangeFilter 
           onDateRangeChange={handleDateRangeChange}
-          onClear={handleDateRangeClear}
+          onTransferStatusChange={handleTransferStatusChange}
         />
       </div>
 
@@ -412,6 +423,7 @@ export default function Home() {
         documentData={selectedDocument}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        loading={loadingDetail}
       />
     </div>
   );

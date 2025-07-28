@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Eye, CheckCircle2, XCircle } from 'lucide-react';
 
 interface DocumentTableProps {
   documents: any[];
@@ -163,6 +163,9 @@ export default function DocumentTable({ documents, onDocumentClick }: DocumentTa
                 </div>
               </th>
               <th className="px-6 py-5 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                Aktarıldı
+              </th>
+              <th className="px-6 py-5 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 İşlemler
               </th>
             </tr>
@@ -211,13 +214,39 @@ export default function DocumentTable({ documents, onDocumentClick }: DocumentTa
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <button
-                    onClick={() => onDocumentClick(document)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    Detay
-                  </button>
+                  <div className="flex items-center justify-center">
+                    {document.IsTransferred === 1 ? (
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-700">Evet</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <XCircle className="h-5 w-5 text-red-500" />
+                        <span className="text-sm font-medium text-red-600">Hayır</span>
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center space-x-2">
+                    {/* Item ve Payment count badges */}
+                    <div className="flex items-center space-x-1 text-xs">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800">
+                        {document.ItemCount || 0} kalem
+                      </span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-800">
+                        {document.PaymentCount || 0} \u00f6deme
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => onDocumentClick(document)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Detay
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

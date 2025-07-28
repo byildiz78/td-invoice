@@ -1,15 +1,16 @@
 'use client';
 
-import { X, FileText } from 'lucide-react';
+import { X, FileText, RefreshCw } from 'lucide-react';
 import { useEffect } from 'react';
 
 interface DocumentModalProps {
   documentData: any;
   isOpen: boolean;
   onClose: () => void;
+  loading?: boolean;
 }
 
-export default function DocumentModal({ documentData, isOpen, onClose }: DocumentModalProps) {
+export default function DocumentModal({ documentData, isOpen, onClose, loading = false }: DocumentModalProps) {
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -94,6 +95,20 @@ export default function DocumentModal({ documentData, isOpen, onClose }: Documen
 
         {/* Document Content */}
         <div className="overflow-y-auto max-h-[95vh] bg-white">
+          {loading ? (
+            <div className="flex items-center justify-center h-96">
+              <div className="text-center">
+                <RefreshCw className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">Fatura detayı yükleniyor...</p>
+              </div>
+            </div>
+          ) : !documentData ? (
+            <div className="flex items-center justify-center h-96">
+              <div className="text-center">
+                <p className="text-gray-600 text-lg">Fatura detayı bulunamadı</p>
+              </div>
+            </div>
+          ) : (
           <div className="p-8 max-w-none">
             {/* Document Header */}
             <div className="text-center mb-8 border-b-2 border-gray-300 pb-6">
@@ -339,6 +354,7 @@ export default function DocumentModal({ documentData, isOpen, onClose }: Documen
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
