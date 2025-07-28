@@ -6,17 +6,9 @@ export interface FetchInvoicesParams {
 
 export async function fetchInvoices(params: FetchInvoicesParams = {}): Promise<any[]> {
   try {
-    // Get API token from environment (this is for internal use, not from localStorage)
-    const apiToken = process.env.NEXT_PUBLIC_ROBOTPOS_API_TOKEN || process.env.ROBOTPOS_API_TOKEN || '153ca5e3-6ab4-4365-952a-e9652f77a519';
-    
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
-    
-    // Add authorization header if token is available
-    if (apiToken) {
-      headers.Authorization = `Bearer ${apiToken}`;
-    }
     
     const response = await fetch('/api/invoices', {
       method: 'POST',
