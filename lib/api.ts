@@ -13,7 +13,8 @@ export async function fetchInvoices(params: FetchInvoicesParams = {}): Promise<a
       'Content-Type': 'application/json',
     };
     
-    const response = await fetch('/api/invoices', {
+    const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
+    const response = await fetch(`${basePath}/api/invoices`, {
       method: 'POST',
       headers,
       body: JSON.stringify(params),
@@ -52,7 +53,8 @@ export async function fetchInvoiceHeaders(params: {
       endDate: params.endDate
     });
     
-    const response = await fetch(`/api/invoices/headers?${queryParams}`, {
+    const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
+    const response = await fetch(`${basePath}/api/invoices/headers?${queryParams}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -81,7 +83,8 @@ export async function fetchInvoiceHeaders(params: {
 // YENİ: Specific invoice detail fetch
 export async function fetchInvoiceDetail(orderKey: string): Promise<InvoiceDetail> {
   try {
-    const response = await fetch(`/api/invoices/${orderKey}`, {
+    const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
+    const response = await fetch(`${basePath}/api/invoices/${orderKey}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

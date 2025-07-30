@@ -18,8 +18,9 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Use a relative path that will work with any basePath
-      const response = await fetch('./api/auth/login', {
+      // Use basePath for API calls
+      const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
+      const response = await fetch(`${basePath}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

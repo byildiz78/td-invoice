@@ -5,13 +5,15 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'TD Invoice API',
+      title: 'e Invoice API',
       version: '1.0.0',
       description: 'E-Invoice management system API',
     },
     servers: [
       {
-        url: process.env.NODE_ENV === 'production' ? 'http://138.199.208.103:3078' : 'http://localhost:3000',
+        url: process.env.NODE_ENV === 'production' 
+          ? `http://138.199.208.103:3078${process.env.NEXT_PUBLIC_BASEPATH || ''}` 
+          : `http://localhost:3000${process.env.NEXT_PUBLIC_BASEPATH || ''}`,
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
       },
     ],

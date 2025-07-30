@@ -30,13 +30,14 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       );
 
-      // Set httpOnly cookie for session
+      // Set httpOnly cookie for session with basePath
+      const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
       response.cookies.set('session', sessionToken, {
         httpOnly: true,
         secure: false, // Allow HTTP in development
         sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
-        path: '/',
+        path: basePath || '/',
         domain: undefined // Allow all domains
       });
 

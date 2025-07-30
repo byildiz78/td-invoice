@@ -27,12 +27,14 @@ export default function Home() {
   const [isDateFilterLoading, setIsDateFilterLoading] = useState(false);
   const [user, setUser] = useState<{ username: string } | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Check authentication
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/verify');
+        const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
+        const response = await fetch(`${basePath}/api/auth/verify`);
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
@@ -55,7 +57,7 @@ export default function Home() {
   // İlk yükleme artık DateRangeFilter tarafından tetikleniyor
   // Bu useEffect kaldırıldı
 
-  // Reload documents when date range changes
+  // Reload documents when date range changes or refresh is triggered
   useEffect(() => {
     if (dateRange && dateRange.start && dateRange.end) {
       const loadFilteredDocuments = async () => {
@@ -80,7 +82,7 @@ export default function Home() {
 
       loadFilteredDocuments();
     }
-  }, [dateRange?.start, dateRange?.end]);
+  }, [dateRange?.start, dateRange?.end, refreshTrigger]);
 
   // Filter documents based on search term and transfer status (date filtering is done on server)
   useEffect(() => {
@@ -134,6 +136,8 @@ export default function Home() {
 
   const handleDateRangeChange = (startDate: string, endDate: string) => {
     setDateRange({ start: startDate, end: endDate });
+    // Trigger refresh even if dates are the same
+    setRefreshTrigger(prev => prev + 1);
   };
 
 
@@ -143,7 +147,8 @@ export default function Home() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
+      await fetch(`${basePath}/api/auth/logout`, { method: 'POST' });
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -201,7 +206,7 @@ export default function Home() {
                 <p className="text-gray-600">Belge ve fatura yönetim sistemi</p>
               </div>
               <a
-                href="/api/docs"
+                href={`${process.env.NEXT_PUBLIC_BASEPATH || ''}/api/docs`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ml-4 inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-all duration-200"
