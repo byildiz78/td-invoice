@@ -140,6 +140,7 @@ export async function GET(
 
     console.log('Sending request to:', apiUrl);
     console.log('Query type: Full detail for OrderKey:', orderKey);
+    console.log('Full SQL Query:', sqlQuery);
 
     // Make request to RobotPos API
     const response = await fetch(apiUrl, {

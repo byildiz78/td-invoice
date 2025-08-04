@@ -1,4 +1,5 @@
 import { InvoiceHeader, InvoiceDetail } from '@/types/invoice';
+import { getApiEndpoint } from '@/lib/utils/api';
 
 export interface FetchInvoicesParams {
   startDate?: string;
@@ -13,8 +14,7 @@ export async function fetchInvoices(params: FetchInvoicesParams = {}): Promise<a
       'Content-Type': 'application/json',
     };
     
-    const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
-    const response = await fetch(`${basePath}/api/invoices`, {
+    const response = await fetch(getApiEndpoint('/api/invoices'), {
       method: 'POST',
       headers,
       body: JSON.stringify(params),
@@ -53,8 +53,7 @@ export async function fetchInvoiceHeaders(params: {
       endDate: params.endDate
     });
     
-    const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
-    const response = await fetch(`${basePath}/api/invoices/headers?${queryParams}`, {
+    const response = await fetch(getApiEndpoint(`/api/invoices/headers?${queryParams}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -83,8 +82,7 @@ export async function fetchInvoiceHeaders(params: {
 // YENİ: Specific invoice detail fetch
 export async function fetchInvoiceDetail(orderKey: string): Promise<InvoiceDetail> {
   try {
-    const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
-    const response = await fetch(`${basePath}/api/invoices/${orderKey}`, {
+    const response = await fetch(getApiEndpoint(`/api/invoices/${orderKey}`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

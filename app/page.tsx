@@ -10,6 +10,7 @@ import DateRangeFilter from '@/components/DateRangeFilter';
 import DocumentModal from '@/components/DocumentModal';
 import { fetchInvoices, fetchInvoiceHeaders, fetchInvoiceDetail } from '@/lib/api';
 import { InvoiceHeader, InvoiceDetail } from '@/types/invoice';
+import { getApiEndpoint } from '@/lib/utils/api';
 
 export default function Home() {
   const router = useRouter();
@@ -33,8 +34,7 @@ export default function Home() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
-        const response = await fetch(`${basePath}/api/auth/verify`);
+        const response = await fetch(getApiEndpoint('/api/auth/verify'));
         if (response.ok) {
           const data = await response.json();
           setUser(data.user);
@@ -147,8 +147,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     try {
-      const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
-      await fetch(`${basePath}/api/auth/logout`, { method: 'POST' });
+      await fetch(getApiEndpoint('/api/auth/logout'), { method: 'POST' });
       router.push('/login');
     } catch (error) {
       console.error('Logout error:', error);
@@ -206,7 +205,7 @@ export default function Home() {
                 <p className="text-gray-600">Belge ve fatura yönetim sistemi</p>
               </div>
               <a
-                href={`${process.env.NEXT_PUBLIC_BASEPATH || ''}/api/docs`}
+                href={getApiEndpoint('/api/docs')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="ml-4 inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-all duration-200"

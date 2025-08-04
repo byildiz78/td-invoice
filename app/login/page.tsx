@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, User, Lock, LogIn, Bot } from 'lucide-react';
+import { getApiEndpoint } from '@/lib/utils/api';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -18,9 +19,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Use basePath for API calls
-      const basePath = process.env.NEXT_PUBLIC_BASEPATH || '';
-      const response = await fetch(`${basePath}/api/auth/login`, {
+      const response = await fetch(getApiEndpoint('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
